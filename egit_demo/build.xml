@@ -10,7 +10,7 @@ Use is subject to license terms.
     <!-- import the common file, which has taskdefs and required dirs -->
     <!--import file="../../build_common.xml" /-->
 	<property environment="env"/>
-	<property name="jc.home" value="${env.JC_CLASSIC_HOME}" />
+	<property name="jc.home" value="${env.JC_HOME}" />
 	<echo message="JC_CLASSIC_HOME ${jc.home}" />   
 	<property name="jvmarg" value="-Djc.home=${jc.home}" />
 	<property name="redirect.output" value="default.output"/>
