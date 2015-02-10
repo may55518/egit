@@ -16,7 +16,9 @@ import sim.toolkit.ToolkitRegistry;
 public class samples extends Applet implements ToolkitInterface, ToolkitConstants {
 	//Display DisplayText
 
-
+/*
+ * add comments in bug_fix branch
+ */
 
 	public static SIMView theSimView;
 	private static byte menuEntry;
