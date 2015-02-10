@@ -1,4 +1,4 @@
-package sample;
+package sample.samples;
 
 import javacard.framework.APDU;
 import javacard.framework.Applet;

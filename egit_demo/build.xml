@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) 2009 Sun Microsystems, Inc.
+All rights reserved.
+Use is subject to license terms.
+-->
+<project name="Java Card 3.0 Classic Edition Samples [Utility]"
+         default="all"
+         basedir=".">
+    <!-- import the common file, which has taskdefs and required dirs -->
+    <!--import file="../../build_common.xml" /-->
+	<property environment="env"/>
+	<property name="jc.home" value="${env.JC_CLASSIC_HOME}" />
+	<echo message="JC_CLASSIC_HOME ${jc.home}" />   
+	<property name="jvmarg" value="-Djc.home=${jc.home}" />
+	<property name="redirect.output" value="default.output"/>
+	
+	<path id="jc_jars"
+          description="Sets the classpath to Java Card API and tools">
+        <pathelement path="${jc.home}/lib/api_classic.jar" />
+        <pathelement path="${jc.home}/lib/tools.jar" />
+		<pathelement path="${basedir}/lib/api.jar" />
+    </path>
+	 <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath>
+            <pathelement location="${jc.home}/lib/ant-contrib-1.0b3.jar" />
+        </classpath>
+    </taskdef>
+	
+	<taskdef name="convert"
+             classname="com.sun.javacard.ant.tasks.ConverterTask"
+             classpath="${jc.home}/lib/jctasks.jar" />
+			 <!--jvmarg value="${jvmarg}" /-->
+	
+			 
+    <!--
+    Sample directory is the sample name.
+    All files (cap, jca, scr, exp) will be generated in build folder with this name
+    -->
+    <basename file="${basedir}" property="sample.name" />
+
+    <!-- -->
+    <target name="clean">
+        <delete dir="./build" />
+    </target>
+
+    <!-- -->
+    <target name="init">
+        <mkdir dir="./build/classes" />
+    </target>
+
+    <!-- -->
+    <target name="compile_applet" depends="init">
+        <javac srcdir="./src/sample"
+               destdir="./build/classes"
+               source="6"
+               target="6"
+               debug="yes"
+			   includeantruntime="false"
+               optimize="yes">
+            <classpath refid="jc_jars" />
+        </javac>
+    </target>
+
+    <!-- -->
+    <target name="convert_applet" depends="compile_applet">
+	    <echo message="${jc.home}" />   
+        <convert dir="./build/classes" Configfile="./src/sample/samples.opt">
+			   <jvmarg value="${jvmarg}" />
+               <classpath refid="jc_jars" /> 
+                        
+        </convert>
+		
+        <copy todir="./build" flatten="true">
+            <fileset dir="./build/classes">
+                <include name="**/*.cap" />
+                <include name="**/*.jca" />
+                <include name="**/*.exp" />
+            </fileset>
+           
+        </copy>
+    </target>
+        
+  <!-- -->
+ <target name="all" depends="convert_applet" />
+
+</project>
