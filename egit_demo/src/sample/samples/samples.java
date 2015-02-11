@@ -25,7 +25,7 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 	private static final  byte[]  MenuText  ={'m','a','i','n',' ', 'm','e','n','u'};
 	private static final  byte[]  MyText  ={'m','a','y',' ',' ','t','e','s','t'};
 	//sub menu
-	private static final  byte[]  sub_menu1  ={'i','t','e','m','1'};
+	private static final  byte[]  sub_menu1  ={'i','n','p','u','t'};
 	private static final  byte[]  MyText1  ={'i','t','e','m','1','t','e','s','t'};
 	private static final  byte[]  sub_menu2  ={'i','t','e','m','2'};
 	private static final  byte[]  MyText2  ={'i','t','e','m','2','t','e','s','t'};
@@ -40,7 +40,14 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 	public static final byte SCENE_ITEM1 = 2;
 	public static final byte SCENE_ITEM2 = 3;
 	public static final byte SCENE_ITEM3 = 4;
-
+    //for display input message
+	private static final byte[] ALPHA_GI = {'I','n','p','u','t',' ','y','o','u','r',' ','m','e','s','s','a','g','e',':'};
+	private static byte[] tempbuf;
+	private static byte[] tempbuf1;
+	public static final byte[] DT_PART1 = { 'I', 'n', 'p', 'u', 't', 't', 'e',
+		'd', ' ', 'c', 'o', 'n', 't', 'e', 'n', 't', ' ', 'i', 's', ':' };
+    public static final byte[] DT_PART2 = { (byte) 0x0D, (byte) 0x0A,
+		(byte) 0x73, (byte) 0x65, (byte) 0x6E, (byte) 0x64, (byte) 0x3F };
 
 
 	samples(){
@@ -65,7 +72,7 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 	}
 	private void gotoSTK(){
 		byte gr=0;
-	    //short off = 0;
+	    short off = 0;
 	    byte scene = SCENE_SI;
 	    do {
 	    	switch (scene) {
@@ -75,10 +82,29 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 							.getTheHandler();
 					byte itemID = proResHdlr.getItemIdentifier();
 					switch (itemID) {
-					case ITEM_ID_1:
+					//get input string and display
+					case ITEM_ID_1: 
 						scene = SCENE_ITEM1;
-						gr = initDisplay(MyText1, (short) 0, (short) MyText1.length, 
-								(byte) 0x81, (byte) 0x04);
+						gr = initGetInput(ALPHA_GI, (byte) 0x04, (byte) 0x00,
+								(short) 1, (short) 20);
+						if (gr == RES_CMD_PERF) {
+							ProactiveResponseHandler myRespHdlr = ProactiveResponseHandler
+									.getTheHandler();
+							myRespHdlr.copyTextString(tempbuf1, (short) 1);
+							tempbuf1[0] = (byte) myRespHdlr.getTextStringLength();
+						}
+					    /*combine tempbuf = DT_PAET1 + tempbuf1 + DT_PART2
+					     *off is final length of final buf  
+						*/
+						off = Util.arrayCopy(DT_PART1, (short) 0, tempbuf, (short) 0,
+								(short) DT_PART1.length);
+						off = Util.arrayCopy(tempbuf1, (short) 1, tempbuf, off,
+								(short) tempbuf1[0]);
+						off = Util.arrayCopy(DT_PART2, (short) 0, tempbuf, off,
+								(short) DT_PART2.length);
+						gr = initDisplay(tempbuf, (short) 0, off, (byte) 0x81,
+								(byte) 0x04);
+
 						break;
 					case ITEM_ID_2:
 						scene = SCENE_ITEM2;
@@ -104,6 +130,15 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 
 		 
 	}
+	
+	private static byte initGetInput(byte[] alphaID, byte DCS, byte qualifier,
+			short minLen, short maxLen) {
+		ProactiveHandler proHdlr = ProactiveHandler.getTheHandler();
+		proHdlr.initGetInput(qualifier, DCS, alphaID, (short) 0,
+				(short) alphaID.length, minLen, maxLen);
+
+		return proHdlr.send();
+	}
 
 
 	private static byte initDisplay(byte[] dtBUF, short offset, short len,
@@ -113,6 +148,7 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 			return proHdlr.send();
 		}
 
+  
 
 	private byte initSelectItem() {
 		ProactiveHandler proHdlr = ProactiveHandler.getTheHandler();
