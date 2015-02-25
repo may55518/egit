@@ -31,6 +31,7 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 	private static final  byte[]  MyText2  ={'i','t','e','m','2','t','e','s','t'};
 	private static final  byte[]  sub_menu3  ={'i','t','e','m','3'};
 	private static final  byte[]  MyText3  ={'i','t','e','m','3','t','e','s','t'};
+	private static final  byte[]  ok  ={'o','k'};
 
 	public static final byte ITEM_ID_1= 1;
 	public static final byte ITEM_ID_2 = (byte) (ITEM_ID_1 + 1);
@@ -40,6 +41,7 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 	public static final byte SCENE_ITEM1 = 2;
 	public static final byte SCENE_ITEM2 = 3;
 	public static final byte SCENE_ITEM3 = 4;
+	public static final byte output_text = 5;
     //for display input message
 	private static final byte[] ALPHA_GI = {'I','n','p','u','t',' ','y','o','u','r',' ','m','e','s','s','a','g','e',':'};
 	private static byte[] tempbuf;
@@ -54,6 +56,8 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 	reg = ToolkitRegistry.getEntry();;
 	menuEntry = reg.initMenuEntry(MenuText, (short) 0,
 			                      (short) MenuText.length, (byte) 0, false, (byte) 0,(short) 0);;
+			              		tempbuf = new byte[255];
+			            		tempbuf1 = new byte[50];
 	////;
 	}
 	public void process(APDU arg0) throws ISOException {}
@@ -87,24 +91,22 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 						scene = SCENE_ITEM1;
 						gr = initGetInput(ALPHA_GI, (byte) 0x04, (byte) 0x00,
 								(short) 1, (short) 20);
+						
 						if (gr == RES_CMD_PERF) {
 							ProactiveResponseHandler myRespHdlr = ProactiveResponseHandler
 									.getTheHandler();
-							myRespHdlr.copyTextString(tempbuf1, (short) 1);
-							tempbuf1[0] = (byte) myRespHdlr.getTextStringLength();
+							myRespHdlr.copyTextString(tempbuf, (short) 1);
+							tempbuf[0] = (byte) myRespHdlr.getTextStringLength();
+							gr = initDisplay(tempbuf, (short) 1, (short) tempbuf[0], 
+									(byte) 0x81, (byte) 0x04);
+						
 						}
 					    /*combine tempbuf = DT_PAET1 + tempbuf1 + DT_PART2
 					     *off is final length of final buf  
 						*/
-						off = Util.arrayCopy(DT_PART1, (short) 0, tempbuf, (short) 0,
-								(short) DT_PART1.length);
-						off = Util.arrayCopy(tempbuf1, (short) 1, tempbuf, off,
-								(short) tempbuf1[0]);
-						off = Util.arrayCopy(DT_PART2, (short) 0, tempbuf, off,
-								(short) DT_PART2.length);
-						gr = initDisplay(tempbuf, (short) 0, off, (byte) 0x81,
-								(byte) 0x04);
-
+						
+						
+						
 						break;
 					case ITEM_ID_2:
 						scene = SCENE_ITEM2;
@@ -122,6 +124,11 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 						//gr = RES_CMD_PERF_SESSION_TERM_USER;
 					}
 					break;
+	    	case output_text:
+	    		gr = initDisplay(tempbuf, (short) 0, off, (byte) 0x81,
+						(byte) 0x04);
+	    		scene =  SCENE_SI;
+	    		break;
 	    	}
 	    	if (scene!=SCENE_SI) {
 	    		scene =SCENE_SI ;
