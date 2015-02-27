@@ -23,6 +23,7 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 	private static ToolkitRegistry reg;
 	//menu entry
 	//test git new for merge test
+	//test git sync again
 	private static final  byte[]  MenuText  ={'m','a','i','n',' ', 'm','e','n','u'};
 	private static final  byte[]  MyText  ={'m','a','y',' ',' ','t','e','s','t'};
 	//sub menu
