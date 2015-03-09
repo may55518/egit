@@ -205,7 +205,7 @@ public class STKSample extends Applet implements ToolkitInterface,
 			short offset1, byte dcs, byte[] alphaID, short alOff) {
 		ProactiveHandler myProHdlr = ProactiveHandler.getTheHandler();
 		myProHdlr.init(PRO_CMD_SEND_SHORT_MESSAGE, (byte) 0x01, DEV_ID_NETWORK);
-		select(SIMView.FID_DF_TELECOM, SIMView.FID_EF_SMSP, tempbuf, (short) 0,
+		select((short) SIMView.FID_DF_TELECOM, (short) SIMView.FID_EF_SMSP, tempbuf, (short) 0,
 				(short) 15);
 		
 		short reclength = (short) (tempbuf[14] & (short) 0x00FF);

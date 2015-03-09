@@ -27,8 +27,8 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 	//sub menu
 	private static final  byte[]  sub_menu1  ={'i','n','p','u','t'};
 	private static final  byte[]  MyText1  ={'i','t','e','m','1','t','e','s','t'};
-	private static final  byte[]  sub_menu2  ={'i','t','e','m','2'};
-	private static final  byte[]  MyText2  ={'i','t','e','m','2','t','e','s','t'};
+	private static final  byte[]  sub_menu2  ={'r','e','a','d',' ','f','i','l','e'};
+	private static final  byte[]  MyText2  ={'r','e','a','d','f','i','l','e'};
 	private static final  byte[]  sub_menu3  ={'i','t','e','m','3'};
 	private static final  byte[]  MyText3  ={'i','t','e','m','3','t','e','s','t'};
 	private static final  byte[]  ok  ={'o','k'};
@@ -51,13 +51,18 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
     public static final byte[] DT_PART2 = { (byte) 0x0D, (byte) 0x0A,
 		(byte) 0x73, (byte) 0x65, (byte) 0x6E, (byte) 0x64, (byte) 0x3F };
 
-
+    //for sending SMS
+    private static byte[] SMSC;
+    
 	samples(){
 	reg = ToolkitRegistry.getEntry();;
 	menuEntry = reg.initMenuEntry(MenuText, (short) 0,
 			                      (short) MenuText.length, (byte) 0, false, (byte) 0,(short) 0);;
-			              		tempbuf = new byte[255];
+			              		//buffer for send out display text
+			                    tempbuf = new byte[255];
 			            		tempbuf1 = new byte[50];
+			            		//for send sms
+			            		SMSC = new byte[7];
 	////;
 	}
 	public void process(APDU arg0) throws ISOException {}
@@ -110,7 +115,13 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 						break;
 					case ITEM_ID_2:
 						scene = SCENE_ITEM2;
-						gr = initDisplay(MyText2, (short) 0, (short) MyText2.length, 
+						//read iccid from SIM  card
+						theSimView.select(SIMView.FID_MF);				
+						//theSimView.select(SIMView.FID_EF_ICCID);
+						short length_of_file = 100;
+						length_of_file = theSimView.select(SIMView.FID_EF_ICCID, tempbuf, (short) 0, (short) tempbuf.length);
+						//length_of_file = theSimView.readBinary((short)0, tempbuf, (short) 0, length_of_file );					
+						gr = initDisplay(tempbuf, (short) 0, length_of_file, 
 								(byte) 0x81, (byte) 0x04);
 						break;
 					case ITEM_ID_3:
@@ -137,6 +148,81 @@ public class samples extends Applet implements ToolkitInterface, ToolkitConstant
 
 		 
 	}
+	
+	private static byte sendSMS(byte[] smsContent, short offset, byte[] dstNo,
+			short offset1, byte dcs, byte[] alphaID, short alOff) {
+		ProactiveHandler myProHdlr = ProactiveHandler.getTheHandler();
+		myProHdlr.init(PRO_CMD_SEND_SHORT_MESSAGE, (byte) 0x01, DEV_ID_NETWORK);
+		select(SIMView.FID_DF_TELECOM, SIMView.FID_EF_SMSP, tempbuf, (short) 0,
+				(short) 15);
+		
+		short reclength = (short) (tempbuf[14] & (short) 0x00FF);
+
+		theSimView.readRecord((short) 1,
+				(byte) SIMView.REC_ACC_MODE_ABSOLUTE_CURRENT,
+				(short) (reclength - 15), tempbuf, (short) 0, (short) 1);
+		theSimView.readRecord((short) 1,
+				(byte) SIMView.REC_ACC_MODE_ABSOLUTE_CURRENT,
+				(short) (reclength - 14), SMSC, (short) 0,
+				(short) (tempbuf[0] & (short) 0x00FF));
+		if (alphaID != null && alOff != (short) 0xFFFF) {
+			myProHdlr
+					.appendTLV(
+							(byte) (ToolkitConstants.TAG_ALPHA_IDENTIFIER | ToolkitConstants.TAG_SET_CR),
+							alphaID, (short) (alOff + 1),
+							(short) alphaID[alOff]);
+		}
+		myProHdlr
+				.appendTLV(
+						(byte) (ToolkitConstants.TAG_ADDRESS | ToolkitConstants.TAG_SET_CR),
+						SMSC, (short) 0x00,
+						(short) (tempbuf[0] & (short) 0x00FF));
+		Util.arrayFillNonAtomic(tempbuf, (short) 0, (short) tempbuf.length,
+				(byte) 0xFF);
+
+		tempbuf[0] = (byte) 0x11;// TP-MTI
+		tempbuf[1] = (byte) 0x00;// TP-MR
+
+		// byte length = (byte) 0x05;// TPDUlength
+		// tempAry[2] = length;// length // TP-DA length
+		// tempAry[3] = (byte) 0x91;// type//
+		// Util.arrayCopy(ADN, (short)0, command, (short)4,
+		// (short)ADN.length);// TP-DA phoneLength
+
+		// length = (byte) 0x03;// ADN length
+		Util.arrayCopy(dstNo, (short) (offset1 + 1), tempbuf, (short) 2,
+				(short) (dstNo[offset1]));// TP-DA
+		byte length = (byte) (dstNo[offset1] + 2);
+		tempbuf[(byte) (length++)] = (byte) 0x00;// TP-PID
+		tempbuf[(byte) (length++)] = dcs;// // TP-DCS 04:8 bit
+		// 00:7-bit alpha charater
+		tempbuf[(byte) (length++)] = (byte) 0x08;// // TP-VP
+		// 00:7-bit alpha charater
+		// TP-VP
+		// command[(byte)(len+7)] = (byte)0x00;
+		tempbuf[(byte) (length++)] = (byte) smsContent[offset];// TP-UDL
+		Util.arrayCopy(smsContent, (short) (offset + 1), tempbuf,
+				(short) (length), smsContent[offset]);// TP-UD
+		myProHdlr
+				.appendTLV(
+						(byte) (ToolkitConstants.TAG_SMS_TPDU | ToolkitConstants.TAG_SET_CR),
+						tempbuf, (short) 0,
+						(short) (length + smsContent[offset]));
+		return myProHdlr.send();
+
+	}
+
+	private static short select(short DF, short EF, byte[] FCI, short offset,
+			short len) {
+
+		theSimView.select(SIMView.FID_MF);
+		theSimView.select(DF);
+		theSimView.select(EF, FCI, (short) offset, (short) len);
+		return Util.makeShort(FCI[(short) (offset + 2)],
+				FCI[(short) (offset + 3)]);
+
+	}
+
 	
 	private static byte initGetInput(byte[] alphaID, byte DCS, byte qualifier,
 			short minLen, short maxLen) {

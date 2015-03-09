@@ -42,6 +42,7 @@ Use is subject to license terms.
     <!-- -->
     <target name="clean">
         <delete dir="./build" />
+    	
     </target>
 
     <!-- -->
@@ -50,7 +51,7 @@ Use is subject to license terms.
     </target>
 
     <!-- -->
-    <target name="compile_applet" depends="init">
+    <target name="compile_sample" depends="init">
         <javac srcdir="./src/sample"
                destdir="./build/classes"
                source="6"
@@ -63,12 +64,38 @@ Use is subject to license terms.
     </target>
 
     <!-- -->
-    <target name="convert_applet" depends="compile_applet">
-	    <echo message="${jc.home}" />   
-        <convert dir="./build/classes" Configfile="./src/sample/samples.opt">
-			   <jvmarg value="${jvmarg}" />
-               <classpath refid="jc_jars" /> 
-                        
+    <target name="compile_stk" depends="init">
+        <javac srcdir="./src/stk_demo"
+               destdir="./build/classes"
+               source="6"
+               target="6"
+               debug="yes"
+			   includeantruntime="false"
+               optimize="yes">
+            <classpath refid="jc_jars" />
+        </javac>
+    </target>
+	
+    <!-- -->
+    <target name="convert_sample_applet" depends="clean,compile_sample">
+	    <echo message="${jc.home}" />
+    	<echo message = "Generation of the CAP,JCA and EXP files..."     />
+        <convert 
+			     	       dir="./build/classes"
+        	               exportpath="${jc.home}/api_export_files"
+                           JCA="true"
+        	               EXP="true"
+        	               CAP="true"
+        	               packagename="sample.samples"
+        	               packageaid="0xa0:0x0:0x0:0x0:0x62:0x3:0x1:0xC:0x6"
+        	               majorminorversion="1.0"
+        	               verbose = "true">               
+        	               <AppletNameAID
+        	                    appletname="sample.samples.samples"
+        	                    aid="0xa0:0x0:0x0:0x0:0x62:0x3:0x1:0xc:0x6:0x1"/>
+        	          	  <jvmarg value="${jvmarg}" />
+        	          	  <classpath refid="jc_jars" /> 
+        	                                
         </convert>
 		
         <copy todir="./build" flatten="true">
@@ -76,12 +103,43 @@ Use is subject to license terms.
                 <include name="**/*.cap" />
                 <include name="**/*.jca" />
                 <include name="**/*.exp" />
-            </fileset>
-           
+            </fileset>  
+        
+        </copy>
+    </target>
+	
+    <target name="convert_stk_applet" depends="clean,compile_stk">
+	    <echo message="${jc.home}" />
+    	<echo message = "Generation of the CAP,JCA and EXP files..."     />
+        <convert 
+			     	       dir="./build/classes"
+        	               exportpath="${jc.home}/api_export_files"
+                           JCA="true"
+        	               EXP="true"
+        	               CAP="true"
+        	               packagename="stk_demo"
+        	               packageaid="0xa0:0x0:0x0:0x0:0x62:0x3:0x1:0xC:0x7"
+        	               majorminorversion="1.0"
+        	               verbose = "true">               
+        	               <AppletNameAID
+        	                    appletname="stk_demo.STKSample"
+        	                    aid="0xa0:0x0:0x0:0x0:0x62:0x3:0x1:0xc:0x7:0x1"/>
+        	          	  <jvmarg value="${jvmarg}" />
+        	          	  <classpath refid="jc_jars" /> 
+        	                                
+        </convert>
+		
+        <copy todir="./build" flatten="true">
+            <fileset dir="./build/classes">
+                <include name="**/*.cap" />
+                <include name="**/*.jca" />
+                <include name="**/*.exp" />
+            </fileset>  
+        
         </copy>
     </target>
         
   <!-- -->
- <target name="all" depends="convert_applet" />
+ <target name="all" depends="convert_stk_applet" />
 
 </project>
